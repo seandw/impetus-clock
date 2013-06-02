@@ -3,12 +3,11 @@
 
 SoftwareSerial display(8, 9);
 
-int ledPin = 13;
 int mphonePin = 0;
-int buzzPin = 12;
+int buzzPin = 10;
 int cycle = 0, vol = 0;
-double temp = 0;
-boolean flash = false;
+double temp = 0, ref = 0;
+boolean flash = false, sample = false, alarm = false, buzz = LOW;
 
 void setup(){
   Serial.begin(9600);
@@ -19,15 +18,41 @@ void setup(){
   display.write('e');
   display.write('s');
   display.write('t');
-  display.write(0x77);
-  display.write(0b00010000);
   
   i2c_init(); //Initialise the i2c bus
   PORTC = (1 << PORTC4) | (1 << PORTC5);//enable pullups
+  
+  for (int i = 0; i < 10; i++) {
+    ref += readTemp();
+    delay(1000);
+  }
+  ref /= 10;
 
-  //pinMode(ledPin, OUTPUT);
+  display.write((int) ref / 10);
+  display.write((int) ref % 10);
+  display.write((int)(ref * 10) % 10);
+  display.write((int)(ref * 100) % 10);
+
   pinMode(mphonePin, INPUT);
   pinMode(buzzPin, OUTPUT);
+}
+
+void serialEvent() {
+  while (Serial.available()) {
+    char in = (char) Serial.read();
+    if (in == 's') {
+      if (sample) {
+        sample = false;
+        alarm = true;
+        temp = 0;
+        vol = 0;
+        cycle = 0;
+      }
+      Serial.write('a'); // Ack, stop sending.
+    } else {
+      display.write(in);
+    }
+  }
 }
 
 float readTemp(){
@@ -58,16 +83,6 @@ float readTemp(){
   float celcius = tempData - 273.15;
   float fahrenheit = (celcius*1.8) + 32;
   
-  //if (Serial) {
-    // Print fahrenheit value.
-    // Serial.println(fahrenheit);
-  //}
-  
-  //if (fahrenheit > 79.f)
-  //  digitalWrite(ledPin, HIGH);
-  //else
-  //  digitalWrite(ledPin, LOW);
-
   return fahrenheit;
 }
 
@@ -86,47 +101,50 @@ int readVol() {
   return maxR-minR;
 }
 
-void alarm() {
-  digitalWrite(buzzPin, HIGH);
-  delay(1000);
-  digitalWrite(buzzPin, LOW);
-}
-
 void loop() {
-  double tt = readTemp();
-  int tv = readVol();
-  if (tt > temp)
-    temp = tt;
-  if (tv > vol)
-    vol = tv;
-  cycle++;
-  if (cycle == 60) {
-    cycle = 0;
-    if (Serial) {
-      Serial.print(temp);
-      Serial.print(" ");
-      Serial.println(vol);
+  if (sample) {
+    ref = readTemp();
+    int tv = readVol();
+    if (ref > temp)
+      temp = ref;
+    if (tv > vol)
+      vol = tv;
+    cycle++;
+    if (cycle == 60) {
+      cycle = 0;
+      if (Serial) {
+        Serial.print(temp);
+        Serial.print(" ");
+        Serial.println(vol);
+      }
+      temp = 0;
+      vol = 0;
     }
-    temp = 0;
-    vol = 0;
-  }
-  if (Serial.available() > 4) {
-    int hour = Serial.parseInt();
-    display.write(hour/10);
-    display.write(hour%10);
-    int minute = Serial.parseInt();
-    display.write(minute/10);
-    display.write(minute%10);
-  }
-  if (!flash) {
-    flash = true;
-    display.write(0x77);
-    display.write(0b00010000);
   } else {
-    flash = false;
-    display.write(0x77);
-    display.write((byte) 0);
+    
+    if (alarm && readTemp() <= ref + 5)
+      cycle++;
+    else if (!alarm && readTemp() > ref + 5)
+      cycle++;
+    else
+      cycle = 0;
+    if (cycle > 10) {
+      if (alarm)
+        alarm = false;
+      else
+        sample = true;
+      cycle = 0;
+    }
+  } 
+  
+  if (alarm || buzz) {
+    buzz = !buzz;
+    digitalWrite(buzzPin, buzz);
   }
-  // alarm();
+  
+  flash = !flash;
+  display.write(0x77);
+  display.write(flash << 4 | sample << 3 | alarm | alarm << 1 | alarm << 2 | alarm << 3);
+  
   delay(1000); // wait a second before printing again
 }
