@@ -107,7 +107,7 @@ int readVol() {
 
 void loop() {
   if (sample) {
-    int tt = readTemp();
+    float tt = readTemp();
     int tv = readVol();
     if (tt > temp)
       temp = tt;
