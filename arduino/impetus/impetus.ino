@@ -6,7 +6,7 @@ SoftwareSerial display(8, 9);
 int mphonePin = 0;
 int buzzPin = 10;
 int cycle = 0, vol = 0;
-double temp = 0, ref = 0;
+double temp = 0;
 boolean flash = false, sample = false, alarm = false, buzz = LOW;
 
 void setup(){
@@ -22,11 +22,7 @@ void setup(){
   i2c_init(); //Initialise the i2c bus
   PORTC = (1 << PORTC4) | (1 << PORTC5);//enable pullups
   
-  for (int i = 0; i < 10; i++) {
-    ref += readTemp();
-    delay(1000);
-  }
-  ref /= 10;
+  float ref = readAmb();
 
   display.write((int) ref / 10);
   display.write((int) ref % 10);
@@ -55,14 +51,14 @@ void serialEvent() {
   }
 }
 
-float readTemp(){
+float mlxRead(byte loc){
   int dev = 0x5A<<1;
   int data_low = 0;
   int data_high = 0;
   int pec = 0;
   
   i2c_start_wait(dev+I2C_WRITE);
-  i2c_write(0x07);
+  i2c_write(loc);
   
   // read
   i2c_rep_start(dev+I2C_READ);
@@ -86,6 +82,14 @@ float readTemp(){
   return fahrenheit;
 }
 
+float readTemp() {
+  return mlxRead(0x07);
+}
+
+float readAmb() {
+  return mlxRead(0x06);
+}
+
 int readVol() {
   int readings[50], minR = 1023, maxR = 0;
   for (int i = 0; i < 50; i++) {
@@ -103,10 +107,10 @@ int readVol() {
 
 void loop() {
   if (sample) {
-    ref = readTemp();
+    int tt = readTemp();
     int tv = readVol();
-    if (ref > temp)
-      temp = ref;
+    if (tt > temp)
+      temp = tt;
     if (tv > vol)
       vol = tv;
     cycle++;
@@ -115,16 +119,17 @@ void loop() {
       if (Serial) {
         Serial.print(temp);
         Serial.print(" ");
+        Serial.print(readAmb());
+        Serial.print(" ");
         Serial.println(vol);
       }
       temp = 0;
       vol = 0;
     }
   } else {
-    
-    if (alarm && readTemp() <= ref + 5)
+    if (alarm && readTemp() <= readAmb() + 5)
       cycle++;
-    else if (!alarm && readTemp() > ref + 5)
+    else if (!alarm && readTemp() > readAmb() + 5)
       cycle++;
     else
       cycle = 0;
