@@ -1,0 +1,101 @@
+\chapter[Software]{Software\footnote{All the software written for this
+  device -- and the \LaTeX~source for this technical manual -- is
+  maintained at \texttt{https://github.com/seandw/impetus-clock} and
+  is licensed under the MIT License.}}
+
+\section{Arduino Pro Mini}
+The Arduino Pro Mini's software only deals with communication between
+sensors and actuators as prescribed by the current state, which it
+maintains in conjunction with the Raspberry Pi. Its software depends
+on the Arduino standard library, an I\textsuperscript{2}C library, and
+a library that facilitates the creation of serial connections on
+digital pins.
+
+In addition to the pseudocode for \verb|setup()| and \verb|loop()|
+below (which in itself ignores helper functions for communicating to
+sensors), the Arduino Pro Mini code utilizes the Arduino construct
+\verb|serialEvent()|, which allows incoming serial data to be read as
+it comes in (after the current \verb|loop()| completes).
+
+\subsection{Pseudocode}
+\begin{verbatim}
+setup():
+  Setup serial communication with RPi.
+  Setup software serial communication with display.
+  Setup I2C communication with temperature sensor.
+  Read ambient temperature, display on display.
+
+serialEvent():
+  while the RPi has more to send:
+    Read byte of data.
+    If data is the alarm command:
+      Change state to the alarm state.
+    Else if data is reset command:
+      Change state to the idle state.
+    Else:
+      Write data to the display.
+
+loop():
+  If in sleep state:
+    Read object temperature.
+    Get current volume.
+    Compare to values to two stored ones, keep the largest.
+    If this has happened 60 times:
+      Send stored temperature, volume, ambient temperature to RPi.
+      Reset state variables.
+  Else:
+    If in alarm state and temperature is below ambient threshold:
+      Increment count.
+    Else if in idle state and temperature is above ambient threshold:
+      Increment count.
+    Else:
+      Reset count.
+      Allow buzzer to buzz if in alarm state.
+    If in alarm state and count is above 10:
+      Stop allowing the buzzer to buzz.
+    If count is 60:
+      If in alarm state:
+        Switch to idle state.
+      Else:
+        Switch to sleep state.
+        Dim display brightness.
+        Notify RPi that the current state is sleep.
+
+  If in alarm state:
+    Buzz.
+
+  Toggle colon on display, signifying a second has passed.
+  Set points on display to signify current state.
+
+  Wait a second.
+\end{verbatim}
+
+\section{Raspberry Pi}
+The software for the Raspberry Pi is divided into three processes that
+communicate between one another and the Arduino Pro Mini. The parent
+process is responsible for not only spawning the other two processes,
+but also to maintain state with the Arduino Pro Mini, receive sensor
+data, generate graphs, and transmit it to the user via Twitter.
+
+The \texttt{updateTime} child process is responsible for maintaining
+the time on the Arduino Pro Mini. This process shares a serial
+connection with the Arduino Pro Mini with its parent process, which
+necessitates a synchronization lock.
+
+The \texttt{updateSched} child process is responsible for maintaining
+the alarm schedule and other configuration data, and frequently checks
+the device's Twitter direct messages from the user to update the alarm
+schedule. This process needs to communicate both configuration data
+and alarm information to the parent process, which it does through a
+pipe connection to the parent process.
+
+Outside of the standard Python libraries, this software relies on the
+\verb|pySerial| library for the serial connection to the Arduino Pro
+Mini, the \verb|Twython| library for simplifying authentication and
+calls to Twitter's REST API, and the \verb|matplotlib| library to
+generate plots from sets of sensor data.
+
+\subsection{Parent Process Pseudocode}
+\begin{verbatim}
+
+\end{verbatim}

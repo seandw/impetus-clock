@@ -141,9 +141,11 @@ void loop() {
     if (cycle > 10 && alarm)
       buzz = true; // Don't buzz, but still be able to reset.  
     if (cycle == 60) {
-      if (alarm)
+      if (alarm) {
         alarm = false;
-      else {
+        display.write(0x7A);
+        display.write(0b11111111);
+      } else {
         sample = true;
         display.write(0x7A);
         display.write(0b01111111);

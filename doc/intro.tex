@@ -1,0 +1,81 @@
+\chapter{Introduction}
+\section{Purpose of Impetus}
+Impetus (literal definition: \emph{the force that makes something
+  happen or happen more quickly}) is an alarm clock that attempts to
+reduce the possibility of the user to undermine the function of the
+alarm clock.
+
+An alarm clock's function is to wake the user up in order for them to
+start their day. In many cases, however, the user can turn off the
+clock in a way that requires so little effort and attention that they
+can do so in a subconscious state. The goal of Impetus is to require
+the user to be active in the deactivation of the alarm while also
+limiting the complexity of that action.
+
+\section{Approach}
+There are roughly three states for Impetus: the idle state, the sleep
+state, and the alarm state. In each state, the most important feature
+used is the device's ability to detect human presence. Impetus uses an
+infrared thermometer sensor to detect the presence of the user. This
+in addition to scheduling features that will be discussed later make
+Impetus controllable without physical input.
+
+\subsection{Presence Detection}
+For the purposes of this device, detecting a presence is done by
+comparing the temperature of a distant object with the ambient
+temperature of the sensor itself. If there is a large enough
+difference (with the object being hotter), the device assumes someone
+(or something) is present. How these readings are used vary according
+to the current state of the device.
+
+\subsubsection{Idle State}
+In the idle state, the task of Impetus is to know at which time to
+transition to the sleep state. Impetus is naive -- it treats any long
+period of presence detection as good enough to transition.
+
+\subsubsection{Sleep State}
+In the sleep state, Impetus uses temperature readings (as well as
+other statistics) to generate graphs to present to the user. These
+metrics are meant to give some insight into sleeping habits, which
+will be mentioned later. These metrics are sent to the user through
+the Twitter social messaging service.
+
+\subsubsection{Alarm State}
+As the alarm goes off, if the temperature of the object in front of
+the sensor is sufficiently above the ambient temperature of the sensor
+(which is generally room temperature), then the clock will not stop
+the alarm sequence. Only when the temperature sensed is near the
+ambient temperature for a set, consecutive amount of time will the
+alarm state complete. If at any time Impetus detects a presence, the
+state will reset.
+
+\subsection{Alarm Scheduling}
+Scheduling is done through the Twitter. Requests modify the current
+state of alarms (daily and impromptu alarms), which are saved between
+sessions as well.
+
+\section{Justification}
+\subsection{Temperature Sensing}
+Human presence through a contactless IR temperature sensor was chosen
+as the main method of determining whether or not the alarm should turn
+off because of what the desired result of an alarm should be -- the
+user should not be anywhere near the alarm clock as it goes off. An
+alarm has failed if that does not happen. If placed correctly, it
+should be hard to cheat as well.
+
+Other metrics were considered, like motion detection and range
+detection, but were found to be missing key pieces of information to
+make it work for an alarm.
+
+\subsection{Online Scheduling and Twitter}
+Online scheduling was chosen to completely get rid of physical
+interaction with the device (in tandem with presence detection). As
+something that is used on a daily basis in rarely changing patterns,
+little interaction should be necessary to use an alarm clock.
+
+Twitter was chosen as both a source for scheduling and a receiver for
+statistics mainly to simplify the software side of Impetus. Scheduling
+commands are small (Twitter messages are small), and images are easy
+to consume on Twitter (graphs of metrics can be saved as images), so
+while Twitter might not be the most sensible choice for these
+operations, its nature fits both in some way.
