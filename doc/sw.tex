@@ -97,5 +97,58 @@ generate plots from sets of sensor data.
 
 \subsection{Parent Process Pseudocode}
 \begin{verbatim}
+main():
+  Open serial connection to Arduino Pro Mini
+  Create updateTime process (as a daemon), lock.
+  Create pipe, updateSched process.
 
+  Receive Twitter configuration from pipe.
+
+  Until interrupted:
+    Flush all input from Arduino Pro Mini.
+    Wait for signal from Arduino Pro Mini.
+    Send current time through pipe.
+    Until the alarm time the pipe sends back:
+      Collect samples of temperature and volume from Arduino Pro Mini.
+    Generate plot and tweet it to user.
+
+  Lock and write reset code to Arduino Pro Mini.
+  Close serial connection.
+
+  Send teardown code through pipe.
+  Close pipe, and join the updateSched process.
+\end{verbatim}
+
+\subsection{\texttt{updateTime} Process Pseudocode}
+\begin{verbatim}
+updateTime(start_time, serial, lock):
+  Lock and write start_time to the Arduino Pro Mini
+
+  Until killed:
+    Lock and write current time to the Arduino Pro Mini.
+    Sleep for 50 seconds.
+\end{verbatim}
+
+\subsection{\texttt{updateSched} Process Pseudocode}
+\begin{verbatim}
+updateSched(pipe):
+  Open configuration file.
+  Send Twitter configuration through pipe.
+
+  Get last time direct messages were checked and the last id seen.
+
+  Until interrupted:
+    If there's data on the pipe:
+      Receive data.
+      If data is a time:
+        Send the corresponding alarm time through the pipe.
+      Else if it's the teardown code:
+        Interrupt.
+    If it's been 3 minutes since last DM check:
+      Get new DMs.
+      For each DM, modify alarm schedule according to the DM command.
+      Store new id and time.
+
+  Save configuration state.
+  Close pipe connection.
 \end{verbatim}
