@@ -33,6 +33,11 @@ def updateTime(time, ser, lock):
                     print "Could not update. Serial connection might be severed."
             sleep(50)
 
+def saveConfig(config):
+    cfg = open("impetus.conf", "w")
+    config.write(cfg)
+    cfg.close()
+
 def updateSched(pipe):
     # KeyboardInterrupt is not a good thing to catch in here.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -67,10 +72,13 @@ def updateSched(pipe):
                         processed = processDm(config, dm)
                         if processed:
                             lastId = processed
+                            config.set('alarm', 'last_id', lastId)
                             t.send_direct_message(screen_name=dm['sender_screen_name'], text="Command sent on %s has been processed." % dm['created_at'])
             except TwythonError:
                 pass # Hrm.
             lastUpdate = dt.now()
+            config.set('alarm', 'last_time', lastUpdate)
+            saveConfig(config)
         sleep(1)
 
     config.set('alarm', 'last_id', lastId)
