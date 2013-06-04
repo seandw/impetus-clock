@@ -1,4 +1,10 @@
 \chapter{Hardware}
+
+\begin{figure}[h!]
+  \centering \includegraphics[width=1\textwidth]{schem}
+  \caption{Schematic for Impetus.}
+\end{figure}
+
 Impetus is comprised of two large components that communicate serially
 with each other, with small components (sensors, actuators)
 communicating with one of the large components.
@@ -21,6 +27,11 @@ process and send through Twitter.
 The model used is a Model B, Revision 2, with 512MB memory and a 700MHz
 ARM processor. Logic voltage is 3.3V, allowing the Raspberry Pi to
 communicate with the Arduino Pro Mini without a level shifter.
+
+\begin{figure}[h!]
+  \centering \includegraphics[width=0.75\textwidth]{bb}
+  \caption{Components of Impetus (sans Mini Buzzer).}
+\end{figure}
 
 \section{Sensors}
 \subsection{MLX90614ESF-BCF IR Thermometer}

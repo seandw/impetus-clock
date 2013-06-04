@@ -15,6 +15,13 @@ benefits by being the part of the body that outputs the most heat. The
 alarm should also be placed so that the user cannot be further than 5
 feet away from the temperature sensor for reasons discussed earlier.
 
+The Raspberry Pi within the device needs to be connected to a 5V power
+source via a micro USB cable. An Ethernet cable is optional if the
+device already has an alarm configuration and the user doesn't want to
+use any impromptu alarms. When the Raspberry Pi is powered up, the
+Arduino Pro Mini also begins (it is powered by the Raspberry Pi), and
+the Impetus program on the Raspberry Pi will begin on start up.
+
 The alarm consists of three different states with different user
 requirements: the idle state, the sleep state, and the alarm state.
 
@@ -99,9 +106,22 @@ weekday for which the argument was chosen.
 If a \verb|set| or \verb|stop| completes successfully, you will
 receive a direct message back from the device declaring that.
 
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.5\textwidth]{twitop}
+  \caption{A couple \texttt{set} commands with acknowledgement.}
+\end{figure}
+
 \subsection{Retrieving Metrics}
 Statistics are generated during the transition between the sleep and
 alarm states. They are then sent to the timeline of the device's
 Twitter alias, which should be marked as protected. These statistics
 are images of graphs, so if the user has the correct permissions to
 see the device's tweets, the user will be able to see the statistics.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.5\textwidth]{twitmetrics}
+  \caption{A tweet with a graph of statistics grathered during the
+    sleep state.}
+\end{figure}
