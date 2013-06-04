@@ -14,10 +14,8 @@ void setup(){
   
   display.begin(9600);
   display.write(0x76);
-  display.write('t');
-  display.write('e');
-  display.write('s');
-  display.write('t');
+  display.write(0x7A);
+  display.write(0b11111111);
   
   i2c_init(); //Initialise the i2c bus
   PORTC = (1 << PORTC4) | (1 << PORTC5);//enable pullups
@@ -37,14 +35,21 @@ void serialEvent() {
   while (Serial.available()) {
     char in = (char) Serial.read();
     if (in == 's') {
-      if (sample) {
-        sample = false;
-        alarm = true;
-        temp = 0;
-        vol = 0;
-        cycle = 0;
-      }
-      Serial.write('a'); // Ack, stop sending.
+      display.write(0x7A);
+      display.write(0b11111111);
+      sample = false;
+      alarm = true;
+      temp = 0;
+      vol = 0;
+      cycle = 0;
+    } else if (in == 'R') { // RESET
+      cycle = vol = 0;
+      temp = 0;
+      sample = alarm = false;
+      display.write(0x79);
+      display.write((byte) 0);
+      display.write(0x7A);
+      display.write(0b11111111);
     } else {
       display.write(in);
     }
@@ -133,11 +138,18 @@ void loop() {
       cycle++;
     else
       cycle = 0;
-    if (cycle > 10) {
+    if (cycle > 10 && alarm)
+      buzz = true; // Don't buzz, but still be able to reset.  
+    if (cycle == 60) {
       if (alarm)
         alarm = false;
-      else
+      else {
         sample = true;
+        display.write(0x7A);
+        display.write(0b01111111);
+        if (Serial)
+          Serial.println("S");
+      }
       cycle = 0;
     }
   } 
