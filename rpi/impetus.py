@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import serial
 from datetime import datetime as dt
 from datetime import timedelta as td
