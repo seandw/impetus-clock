@@ -172,7 +172,7 @@ def plot(temp, vol, time, start, end, creds):
     minutes = mdates.HourLocator()
     hoursFmt = mdates.DateFormatter("%Y-%m-%d %H:%M")
     
-    fig = plt.figure(1)
+    fig = plt.figure()
     ax = fig.add_subplot(211)
     ax.plot(time, temp, "r-")
     
@@ -217,7 +217,9 @@ def plot(temp, vol, time, start, end, creds):
         print e
         fig.savefig('/home/pi/plot-%s.png' % dt.now().strftime("%Y%m%d-%H%M%S"))
 
-if __name__ == "__main__":
+    plt.close()
+
+def main():
     ser = serial.Serial('/dev/ttyAMA0', 9600, timeout=None)
     ser.open()
 
@@ -257,3 +259,6 @@ if __name__ == "__main__":
     pipe.send("teardown")
     pipe.close()
     aProc.join()
+
+if __name__ == "__main__":
+    main()
